@@ -1,12 +1,10 @@
-# IP流量分析程序
+# [IP流量分析程序](https://github.com/WenchuLiu/Sniffer)
 
-Network course project
-python-packet-sniffer
-NKU计算机网络作业IP流量分析程序
+NKU计算机网络作业
 
 ## Introduction
 
-Windows 平台，基于 `Npcap` API 抓包。
+Windows 平台，基于 `Npcap` API 抓包程序。
 
 ## Installation
 
@@ -56,7 +54,7 @@ python Startwindow.py
 - 输出框2: 包的详细信息
 - 输出框3: 包的具体二进制信息
 
-使用Capture抓包之前应先设置好Filter。仿照[Sniffer](https://github.com/StevenBaby/sniffer)的设置，Filter 在设置完后会进行校验，检测通过之后，Filter 输入框背景颜色会变成`Green`，否则会变成`Red`。若Filter设置错误，点击Capture-Start软件将会没有反应。此时应先点击Capture-Stop，设置好Filter，再进行抓包。
+使用Capture抓包之前应先设置好Filter。仿照 [Sniffer](https://github.com/StevenBaby/sniffer) 的设置，Filter 在设置完后会进行校验，检测通过之后，Filter 输入框背景颜色会变成`Green`，否则会变成`Red`。若Filter设置错误，点击Capture-Start软件将会没有反应。此时应先点击Capture-Stop，设置好Filter，再进行抓包。
 注：如想一直嗅探IPv6分组，应确保 Filter 中含有 `ip6` 条件。
 
 ![](imgs/PixPin_2024-11-24_14-50-20.png)
