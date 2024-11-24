@@ -10,6 +10,7 @@ import numpy as np
 from PyQt5 import QtCore, QtGui, QtWidgets
 from funcs import *
 from scapy.all import *
+from scapy.arch.common import compile_filter
 import netifaces as nif
 import psutil
 from threading import Thread
@@ -41,6 +42,7 @@ class Ui_capturing_window():
         self.Search = QtWidgets.QLineEdit(self.centralwidget)
         self.Search.setObjectName("Search")
         self.verticalLayout.addWidget(self.Search)
+        self.Search.editingFinished.connect(self.check)
         # self.Searchbutton = QtWidgets.QToolButton(self.centralwidget)
         # self.Searchbutton.setObjectName("Searchbutton")
         # self.verticalLayout.addWidget(self.Searchbutton)
@@ -148,7 +150,13 @@ class Ui_capturing_window():
 
         # self.Searchbutton.clicked.connect(self.filter_c)
 
-
+    def check(self):
+        f=self.Search.text()
+        try:
+            compile_filter(f)
+            self.Search.setStyleSheet("background-color: green")
+        except:
+            self.Search.setStyleSheet("background-color: red")
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
@@ -290,7 +298,7 @@ class Ui_capturing_window():
     def threaded_sniff_target(self):
         # sniff(prn=lambda x: print(str(x)))
         print("threaded_sniff_target")
-        f = self.Search.text()  # 'ip6 proto'
+        f = self.Search.text()  # 'ip6 proto'       
         self.pckts = sniff(prn=self.sniffed_packet, 
                            filter=f,
                            stop_filter=lambda x: self.isStop)
@@ -387,7 +395,7 @@ class Ui_capturing_window():
         msg = QtWidgets.QMessageBox()
         msg.setIcon(QtWidgets.QMessageBox.Information)
         msg.setWindowTitle("Help")
-        msg.setText("这是一个Packet-Sniffer工具，在开始使用该软件之前，你应该先安装Npcap。如果需要你需要先设置好Filter参数，Filter在Menu栏正下方。举例 you can start capturing packets by clicking on the start button, and stop capturing by clicking on the stop button. You can save the captured packets by clicking on the save button, and load a saved file by clicking on the open button.")
+        msg.setText("这是一个Packet-Sniffer工具，在开始使用该软件之前，你应该先安装Npcap。开始sniff之前，你需要先设置过滤条件，然后点击Start按钮。下面是一些常用的过滤条件：\n ip6: 只显示ipv6的数据包\n ip6 proto udp: 只显示ipv6协议为udp的数据包\n ip6 proto udp and port 53: 只显示ipv6协议为udp且端口为53的数据包\n ip6 proto udp and port 53 and host www.baidu.com: 只显示ipv6协议为udp且端口为53且host地址为www.baidu.com的数据包\n")
         msg.exec_()
 
 

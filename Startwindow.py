@@ -10,6 +10,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from funcs import *
 import gui
 
+
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         self.my_window = MainWindow
@@ -19,7 +20,7 @@ class Ui_MainWindow(object):
         self.centralwidget.setObjectName("centralwidget")
         self.gridLayout = QtWidgets.QGridLayout(self.centralwidget)
         self.gridLayout.setObjectName("gridLayout")
-        
+
         # 创建一个 QListWidget 对象，用于显示网络接口列表
         self.net_interfece = QtWidgets.QListWidget(self.centralwidget)
         self.net_interfece.setObjectName("net_interfece")
@@ -38,12 +39,12 @@ class Ui_MainWindow(object):
         self.menuFile = QtWidgets.QMenu(self.menubar)
         self.menuFile.setObjectName("menuFile")
         MainWindow.setMenuBar(self.menubar)
-        
+
         # 创建状态栏, 并将状态栏设置到主窗口
         self.statusbar = QtWidgets.QStatusBar(MainWindow)
         self.statusbar.setObjectName("statusbar")
         MainWindow.setStatusBar(self.statusbar)
-        
+
         # 创建打开动作，并连接到 load_c 方法
         self.actionOpen = QtWidgets.QAction(MainWindow)
         self.actionOpen.setObjectName("actionOpen")
@@ -74,7 +75,6 @@ class Ui_MainWindow(object):
         __sortingEnabled = self.net_interfece.isSortingEnabled()
         self.net_interfece.setSortingEnabled(False)
 
-
         #################################################################
         self.network_interfaces, self.mac_addresses = get_all_interfaces()
         for ni in self.network_interfaces:
@@ -84,7 +84,8 @@ class Ui_MainWindow(object):
         #################################################################
 
         self.net_interfece.setSortingEnabled(__sortingEnabled)
-        self.Start_capture.setText(_translate("MainWindow", "Select Network Interface"))
+        self.Start_capture.setText(_translate(
+            "MainWindow", "Select Network Interface"))
         self.menuFile.setTitle(_translate("MainWindow", "File"))
 
         self.actionOpen.setText(_translate("MainWindow", "Open"))
@@ -93,14 +94,11 @@ class Ui_MainWindow(object):
         self.actionStopr.setText(_translate("MainWindow", "Stop"))
         self.actionRestart.setText(_translate("MainWindow", "Restart"))
 
-
-
     def start_capture_btn_clicked(self):
         selected_index = self.net_interfece.currentRow()
         self.chosen_mac = self.mac_addresses[selected_index]
 
-
-        #print(self.chosen_mac)
+        # print(self.chosen_mac)
         #########
 
         self.newWindow = QtWidgets.QMainWindow()
@@ -109,22 +107,19 @@ class Ui_MainWindow(object):
         self.newWindow.show()
         self.my_window.hide()
 
-
-
     def load_c(self):
-        #print("load_c 1")
+        # print("load_c 1")
         self.newWindow = QtWidgets.QMainWindow()
-        #print("aaaaaaaaa")
+        # print("aaaaaaaaa")
         self.new_ui = gui.Ui_capturing_window(None, self.my_window)
-        #print("bbbbbbbbbbbbbbb")
+        # print("bbbbbbbbbbbbbbb")
         self.new_ui.setupUi(self.newWindow)
-        #print("ccccccccccccccc")
+        # print("ccccccccccccccc")
         self.newWindow.show()
-        #print("ddddddd")
+        # print("ddddddd")
         self.new_ui.load_c()
-        #print("eeeeeee")
+        # print("eeeeeee")
         self.my_window.hide()
-
 
     def load_err_msg(self):
         msg = QtWidgets.QMessageBox()
@@ -132,10 +127,6 @@ class Ui_MainWindow(object):
         msg.setWindowTitle("Error Message")
         msg.setText("File not found!")
         msg.exec_()
-
-
-
-
 
 
 if __name__ == "__main__":
@@ -146,4 +137,3 @@ if __name__ == "__main__":
     ui.setupUi(MainWindow)
     MainWindow.show()
     sys.exit(app.exec_())
-
