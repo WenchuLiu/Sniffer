@@ -1,0 +1,15 @@
+# 忽略 VSCode 配置文件夹
+.vscode/
+
+# 忽略 Python 的缓存文件夹
+__pycache__/
+
+# 忽略虚拟环境
+venv/
+
+# 忽略所有 .pyc 文件
+*.pyc
+
+# 忽略其他临时文件
+*.log
+*.tmp

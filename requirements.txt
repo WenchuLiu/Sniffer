@@ -1,0 +1,6 @@
+scapy
+PyQt5
+pyqt5-tools
+numpy
+netifaces
+psutil
