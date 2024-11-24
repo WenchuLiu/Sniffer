@@ -17,6 +17,7 @@ from threading import Thread
 import time
 import datetime
 import socket
+import csv
 from input_dialogue import *
 
 class Ui_capturing_window():
@@ -97,18 +98,18 @@ class Ui_capturing_window():
         self.statusbar.setObjectName("statusbar")
         MainWindow.setStatusBar(self.statusbar)
 
-        self.actionOpen = QtWidgets.QAction(MainWindow)
-        self.actionOpen.setObjectName("actionOpen")
-        self.actionOpen.triggered.connect(self.load_c)
+        # self.actionOpen = QtWidgets.QAction(MainWindow)
+        # self.actionOpen.setObjectName("actionOpen")
+        # self.actionOpen.triggered.connect(self.load_c)
 
 
         self.actionSave = QtWidgets.QAction(MainWindow)
         self.actionSave.setObjectName("actionSave")
         self.actionSave.triggered.connect(self.save_c)
 
-        self.actionBack = QtWidgets.QAction(MainWindow)
-        self.actionBack.setObjectName("actionBack")
-        self.actionBack.triggered.connect(self.back_c)
+        # self.actionBack = QtWidgets.QAction(MainWindow)
+        # self.actionBack.setObjectName("actionBack")
+        # self.actionBack.triggered.connect(self.back_c)
 
 
         self.actionClear = QtWidgets.QAction(MainWindow)
@@ -130,9 +131,9 @@ class Ui_capturing_window():
         self.actionStop.triggered.connect(self.stop_c)
 
 
-        self.menuFile.addAction(self.actionOpen)
+        # self.menuFile.addAction(self.actionOpen)
         self.menuFile.addAction(self.actionSave)
-        self.menuFile.addAction(self.actionBack)
+        # self.menuFile.addAction(self.actionBack)
 
 
         self.menuCapture.addAction(self.actionStart)
@@ -180,9 +181,9 @@ class Ui_capturing_window():
         self.menuFile.setTitle(_translate("MainWindow", "File"))
         self.menuCapture.setTitle(_translate("MainWindow", "Capture"))
         self.menuHelp.setTitle(_translate("MainWindow", "Help"))
-        self.actionOpen.setText(_translate("MainWindow", "Open"))
+        # self.actionOpen.setText(_translate("MainWindow", "Open"))
         self.actionSave.setText(_translate("MainWindow", "Save"))
-        self.actionBack.setText(_translate("MainWindow", "Back"))
+        # self.actionBack.setText(_translate("MainWindow", "Back"))
         self.actionClear.setText(_translate("MainWindow", "Clear"))
         self.actionStart.setText(_translate("MainWindow", "Start"))
         self.actionStop.setText(_translate("MainWindow", "Stop"))
@@ -340,35 +341,56 @@ class Ui_capturing_window():
 
 
     def save_c(self):
+        print("save_c")
         try:
-            dialouge_box = Dialouge()
-            self.file_name = dialouge_box. initUI(save=True)
-            wrpcap(self.file_name, self.pckts)
+            print("save_c 2")
+            report = "Traffic Analysis Report\n"
+            report += "="*50 + "\n"
+            report += f"Total Packets: {len(self.pckts)}\n"
+            report += "-"*50 + "\n"
+            for p in self.pckts:
+                report += f"Time: {datetime.datetime.fromtimestamp(p.time)}\n"
+                report += f"Source: {p.src}\n"
+                report += f"Destination: {p.dst}\n"
+                # get the protocol of the packet
+                layer = None
+                for var in self.get_packet_layers(p):
+                    if not isinstance(var, (Padding, Raw)):
+                        layer = var
+                protocol = layer.name
+                
+                report += f"Protocol: {protocol}\n"
+                report += f"Length: {len(p)}\n"
+                report += "-"*50 + "\n"
+            
+            # Save the report to a file
+            with open("traffic_report.txt", "w") as file:
+                file.write(report)
         except:
+            print("save_c 3")
             self.save_err_msg()
 
 
     def load_c(self):
-        #print("load_c 2")
-        try:
-            dialouge_box = Dialouge()
-            self.file_name = dialouge_box.initUI()
+        print("load_c 2")
+        # try:
+        #     dialouge_box = Dialouge()
+        #     self.file_name = dialouge_box.initUI()
+        #     self.pckts = rdpcap(self.file_name)
+        #     self.clear_c()
+        #     for p in self.pckts:
+        #         rowPosition = self.Packets_table.rowCount()
+        #         self.Packets_table.insertRow(rowPosition)
+        #         self.Packets_table.setItem(rowPosition, 0,
+        #                                    QtWidgets.QTableWidgetItem(str(datetime.datetime.fromtimestamp(p.time))))
+        #         self.Packets_table.setItem(rowPosition, 1, QtWidgets.QTableWidgetItem(p[IP].src))
+        #         self.Packets_table.setItem(rowPosition, 2, QtWidgets.QTableWidgetItem(p[IP].dst))
+        #         self.Packets_table.setItem(rowPosition, 3,
+        #                                    QtWidgets.QTableWidgetItem(self.ip_protocols[int(p[IP].proto)]))
+        #         self.Packets_table.setItem(rowPosition, 4, QtWidgets.QTableWidgetItem(str(p[IP].len)))
 
-            self.pckts = rdpcap(self.file_name)
-            self.clear_c()
-            for p in self.pckts:
-                rowPosition = self.Packets_table.rowCount()
-                self.Packets_table.insertRow(rowPosition)
-                self.Packets_table.setItem(rowPosition, 0,
-                                           QtWidgets.QTableWidgetItem(str(datetime.datetime.fromtimestamp(p.time))))
-                self.Packets_table.setItem(rowPosition, 1, QtWidgets.QTableWidgetItem(p[IP].src))
-                self.Packets_table.setItem(rowPosition, 2, QtWidgets.QTableWidgetItem(p[IP].dst))
-                self.Packets_table.setItem(rowPosition, 3,
-                                           QtWidgets.QTableWidgetItem(self.ip_protocols[int(p[IP].proto)]))
-                self.Packets_table.setItem(rowPosition, 4, QtWidgets.QTableWidgetItem(str(p[IP].len)))
-
-        except:
-            self.load_err_msg()
+        # except:
+        #     self.load_err_msg()
 
     def clear_c(self):
         self.Packets_table.setRowCount(0)
