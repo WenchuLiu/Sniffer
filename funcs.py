@@ -14,7 +14,7 @@ def get_all_interfaces():
         print(i)
         print(d2[i][0].address.lower().replace("-", ":"))
 
-        if "Loopback" not in i and d[i][0]:
+        if "Loopback" not in i:# and d[i][0]:
             print(i, d2[i][0].address)
             #chosen_mac = d2[i][0].address.lower().replace("-", ":")
             #print("chosen_mac", chosen_mac)

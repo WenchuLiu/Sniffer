@@ -8,6 +8,7 @@
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 from funcs import *
+from scapy import all as cap
 import gui
 
 
@@ -76,11 +77,16 @@ class Ui_MainWindow(object):
         self.net_interfece.setSortingEnabled(False)
 
         #################################################################
-        self.network_interfaces, self.mac_addresses = get_all_interfaces()
-        for ni in self.network_interfaces:
-            item = QtWidgets.QListWidgetItem()
+        # self.network_interfaces, self.mac_addresses = get_all_interfaces()
+        # for ni in self.network_interfaces:
+        #     item = QtWidgets.QListWidgetItem()
+        #     self.net_interfece.addItem(item)
+        #     item.setText(_translate("MainWindow", ni))
+            
+        for face in cap.get_working_ifaces():
+            item = QtWidgets.QListWidgetItem(face.name)
             self.net_interfece.addItem(item)
-            item.setText(_translate("MainWindow", ni))
+            item.setText(_translate("MainWindow", face.name))
         #################################################################
 
         self.net_interfece.setSortingEnabled(__sortingEnabled)
@@ -95,14 +101,15 @@ class Ui_MainWindow(object):
         self.actionRestart.setText(_translate("MainWindow", "Restart"))
 
     def start_capture_btn_clicked(self):
-        selected_index = self.net_interfece.currentRow()
-        self.chosen_mac = self.mac_addresses[selected_index]
+        # selected_index = self.net_interfece.currentRow()
+        # self.chosen_mac = self.mac_addresses[selected_index]
 
+        self.selected = self.net_interfece.currentItem().text()
         # print(self.chosen_mac)
         #########
-
+        print("selected", self.selected)
         self.newWindow = QtWidgets.QMainWindow()
-        self.new_ui = gui.Ui_capturing_window(self.chosen_mac, self.my_window)
+        self.new_ui = gui.Ui_capturing_window(self.selected, self.my_window)
         self.new_ui.setupUi(self.newWindow)
         self.newWindow.show()
         self.my_window.hide()

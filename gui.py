@@ -6,6 +6,7 @@
 #
 # WARNING! All changes made in this file will be lost!
 import subprocess
+from queue import Queue
 import numpy as np
 from PyQt5 import QtCore, QtGui, QtWidgets
 from funcs import *
@@ -21,16 +22,16 @@ import csv
 from input_dialogue import *
 
 class Ui_capturing_window():
-    def __init__(self, mac, start_window):
+    def __init__(self, name, start_window):
         #print("Ui_capturing_window")
-        self.chosen_mac = mac
+        self.name = name
         #print("constructoooooooooooooooooor")
         #print(self.chosen_mac)
         self.capturing_status = True
-        self.isStop = False
         self.ip_protocols = {num:name[8:] for name,num in vars(socket).items() if name.startswith("IPPROTO")}
         self.window_to_reshow = start_window
-
+        self.sniffer = None
+        self.queue = deque()
 
     def setupUi(self, MainWindow):
         self.my_window = MainWindow
@@ -49,7 +50,7 @@ class Ui_capturing_window():
         # self.verticalLayout.addWidget(self.Searchbutton)
         self.Packets_table = QtWidgets.QTableWidget(self.centralwidget)
         self.Packets_table.setObjectName("Packets")
-        self.Packets_table.setColumnCount(5)
+        self.Packets_table.setColumnCount(6)
         self.Packets_table.setRowCount(0)
         self.Packets_table.setColumnWidth(0,200) ###########################
         self.Packets_table.itemSelectionChanged.connect(self.selected_change)
@@ -149,8 +150,6 @@ class Ui_capturing_window():
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
-        # self.Searchbutton.clicked.connect(self.filter_c)
-
     def check(self):
         f=self.Search.text()
         try:
@@ -175,8 +174,8 @@ class Ui_capturing_window():
         item.setText(_translate("MainWindow", "Protocol"))
         item = self.Packets_table.horizontalHeaderItem(4)
         item.setText(_translate("MainWindow", "Length"))
-        #item = self.Packets_table.horizontalHeaderItem(5)
-        #item.setText(_translate("MainWindow", "Info"))
+        item = self.Packets_table.horizontalHeaderItem(5)
+        item.setText(_translate("MainWindow", "Info"))
 
         self.menuFile.setTitle(_translate("MainWindow", "File"))
         self.menuCapture.setTitle(_translate("MainWindow", "Capture"))
@@ -198,58 +197,24 @@ class Ui_capturing_window():
         self.reshow()
         self.my_window.close()
 
-    def filter_c(self):
-        f = self.Search.text()
-        self.clear_c()
-
-        if f is None:
-            for p in self.pckts:
-                try:
-                    rowPosition = self.Packets_table.rowCount()
-                    self.Packets_table.insertRow(rowPosition)
-                    self.Packets_table.setItem(rowPosition, 0,
-                                               QtWidgets.QTableWidgetItem(str(datetime.datetime.fromtimestamp(p.time))))
-                    self.Packets_table.setItem(rowPosition, 1, QtWidgets.QTableWidgetItem(p[IP].src))
-                    self.Packets_table.setItem(rowPosition, 2, QtWidgets.QTableWidgetItem(p[IP].dst))
-                    self.Packets_table.setItem(rowPosition, 3,
-                                               QtWidgets.QTableWidgetItem(self.ip_protocols[int(p[IP].proto)]))
-                    self.Packets_table.setItem(rowPosition, 4, QtWidgets.QTableWidgetItem(str(p[IP].len)))
-                except:
-                    pass
-        else:
-            for p in self.pckts:
-                try:
-                    search_here = [p.sport, p.dport, 
-                                   str(self.ip_protocols[int(p[IP].proto)]), 
-                                   p[IP].src, p[IP].dst]
-                    if f in search_here:
-                        rowPosition = self.Packets_table.rowCount()
-                        self.Packets_table.insertRow(rowPosition)
-                        self.Packets_table.setItem(rowPosition, 0,
-                                                   QtWidgets.QTableWidgetItem(str(datetime.datetime.fromtimestamp(p.time))))
-                        self.Packets_table.setItem(rowPosition, 1, QtWidgets.QTableWidgetItem(p[IP].src))
-                        self.Packets_table.setItem(rowPosition, 2, QtWidgets.QTableWidgetItem(p[IP].dst))
-                        self.Packets_table.setItem(rowPosition, 3,
-                                                   QtWidgets.QTableWidgetItem(self.ip_protocols[int(p[IP].proto)]))
-                        self.Packets_table.setItem(rowPosition, 4, QtWidgets.QTableWidgetItem(str(p[IP].len)))
-
-                except:
-                    pass
-
     def start_c(self):
-        if self.chosen_mac is None:
+        if self.name is None:
             self.back_c()
         print("SnifferStart")
-        self.isStop = False
-        sniffer = Thread(target=self.threaded_sniff_target)
-        sniffer.daemon = True
-        sniffer.start()
-        # print("sniffer started")
+        f = self.Search.text()  # 'ip6 proto'
+        iface = self.name
+        print("iface:", iface)
+        self.sniffer = AsyncSniffer(prn=self.sniffed_packet, 
+                                    iface=iface,
+                                    filter=f)
+        self.sniffer.start()
 
 
     def stop_c(self):
         print("Sniffer stoped")
-        self.isStop = True
+        if self.sniffer is None:
+            return
+        self.sniffer.stop()
         
     def get_packet_layers(self, packet):
         counter = 0
@@ -261,11 +226,19 @@ class Ui_capturing_window():
             counter += 1
 
     def sniffed_packet(self, packet: scapy.packet.Packet) -> None:
-        # print("sniffed")
-        # print(packet.show())
-        # if IP in packet:
-        print("src", packet.src, mac_for_ip(packet.src))
-        print("dst", packet.dst, mac_for_ip(packet.dst))
+        if not packet:
+            return
+        self.queue.append(packet)
+        
+        # source
+        if IP in packet:
+            src = packet[IP].src
+            dst = packet[IP].dst
+        else:
+            src = packet.src
+            dst = packet.dst
+        print("src", src, mac_for_ip(src))
+        print("dst", dst, mac_for_ip(dst))
         
         # get the protocol of the packet
         layer = None
@@ -283,31 +256,22 @@ class Ui_capturing_window():
             rowPosition, 0, QtWidgets.QTableWidgetItem(
                 str(datetime.datetime.fromtimestamp(packet.time))))
         self.Packets_table.setItem(
-            rowPosition, 1, QtWidgets.QTableWidgetItem(packet.src))
+            rowPosition, 1, QtWidgets.QTableWidgetItem(src))
         self.Packets_table.setItem(
-            rowPosition, 2, QtWidgets.QTableWidgetItem(packet.dst))
+            rowPosition, 2, QtWidgets.QTableWidgetItem(dst))
         self.Packets_table.setItem(
-            rowPosition, 3, QtWidgets.QTableWidgetItem(protocol))
+            rowPosition, 3, QtWidgets.QTableWidgetItem(str(protocol)))
         self.Packets_table.setItem(
             rowPosition, 4, QtWidgets.QTableWidgetItem(length))
-
-    # def isRequired(self, packet:scapy.packet.Packet)->bool:
-    #     if packet.type == 'IPv6':
-    #         return True
-    #     return False
-
-    def threaded_sniff_target(self):
-        # sniff(prn=lambda x: print(str(x)))
-        print("threaded_sniff_target")
-        f = self.Search.text()  # 'ip6 proto'       
-        self.pckts = sniff(prn=self.sniffed_packet, 
-                           filter=f,
-                           stop_filter=lambda x: self.isStop)
-
+        info = str(packet.summary())
+        item = QtWidgets.QTableWidgetItem(info)
+        item.packet = packet
+        self.Packets_table.setItem(rowPosition, 5,item)
+        
 
     def selected_change(self):
         index = self.Packets_table.currentRow()
-        p = self.pckts[index]
+        p = self.queue[index]
         #print(index)
         #print(str(hexdump(self.pckts[0])))
 
@@ -343,6 +307,7 @@ class Ui_capturing_window():
     def save_c(self):
         print("save_c")
         try:
+            self.pckts = self.queue.popleft()
             print("save_c 2")
             report = "Traffic Analysis Report\n"
             report += "="*50 + "\n"
@@ -427,7 +392,7 @@ if __name__ == "__main__":
     import sys
     app = QtWidgets.QApplication(sys.argv)
     MainWindow = QtWidgets.QMainWindow()
-    ui = Ui_capturing_window("64:5a:04:b4:6a:1c")
+    ui = Ui_capturing_window("WLAN")
     ui.setupUi(MainWindow)
     MainWindow.show()
     sys.exit(app.exec_())
