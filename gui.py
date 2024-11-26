@@ -216,6 +216,7 @@ class Ui_capturing_window():
         if self.sniffer is None:
             return
         self.sniffer.stop()
+        self.sniffer = None
         
     def get_packet_layers(self, packet):
         counter = 0
