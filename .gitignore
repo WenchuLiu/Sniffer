@@ -16,3 +16,12 @@ venv/
 
 # 忽略说明文件
 说明文档.docx
+
+# 忽略build文件夹
+build/
+
+# 忽略dist文件夹
+dist/
+
+# 忽略.spec文件
+*.spec

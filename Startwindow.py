@@ -82,7 +82,6 @@ class Ui_MainWindow(object):
         #     item = QtWidgets.QListWidgetItem()
         #     self.net_interfece.addItem(item)
         #     item.setText(_translate("MainWindow", ni))
-            
         for face in cap.get_working_ifaces():
             item = QtWidgets.QListWidgetItem(face.name)
             self.net_interfece.addItem(item)
