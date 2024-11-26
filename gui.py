@@ -32,6 +32,7 @@ class Ui_capturing_window():
         self.window_to_reshow = start_window
         self.sniffer = None
         self.queue = deque()
+        self.pckts = []
 
     def setupUi(self, MainWindow):
         self.my_window = MainWindow
@@ -307,7 +308,11 @@ class Ui_capturing_window():
     def save_c(self):
         print("save_c")
         try:
-            self.pckts = self.queue.popleft()
+            if self.queue is None:
+                return
+            while self.queue:
+                item = self.queue.popleft()
+                self.pckts.append(item)
             print("save_c 2")
             report = "Traffic Analysis Report\n"
             report += "="*50 + "\n"
@@ -326,6 +331,7 @@ class Ui_capturing_window():
                 
                 report += f"Protocol: {protocol}\n"
                 report += f"Length: {len(p)}\n"
+                report += f"Info: {p.summary()}\n"
                 report += "-"*50 + "\n"
             
             # Save the report to a file
